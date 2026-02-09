@@ -1,72 +1,130 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Produto</title>
+<meta charset="UTF-8">
+<title>Consulta FIPE</title>
 </head>
 
 <body>
 
-    <main>
-        <section class="container">
+<h2>Consulta Tabela FIPE</h2>
 
-            <header>
-                <h2>Cadastrar Produto</h2>
-            </header>
+<label>Marca:</label><br>
+<select id="marca">
+  <option value="">Carregando marcas...</option>
+</select>
+<br><br>
 
-            <form action="processar.php" method="POST" enctype="multipart/form-data">
+<label>Modelo:</label><br>
+<select id="modelo" disabled>
+  <option>Escolha a marca primeiro</option>
+</select>
+<br><br>
 
-                <fieldset>
-                    <legend>Informações do Produto</legend>
+<label>Ano:</label><br>
+<select id="ano" disabled>
+  <option>Escolha o modelo</option>
+</select>
+<br><br>
 
-                    <div class="form-group">
-                        <label for="id">Código Identificador (ID):</label>
-                        <input type="text" id="id" name="id" required>
-                    </div>
+<button onclick="consultar()">Consultar preço</button>
 
-                    <div class="form-group">
-                        <label for="title">Título do Produto:</label>
-                        <input type="text" id="title" name="title" required>
-                    </div>
+<h3 id="resultado"></h3>
 
-                    <div class="form-group">
-                        <label for="price">Preço:</label>
-                        <input type="number" id="price" name="price" step="0.01" min="0" required>
-                    </div>
+<script>
 
-                    <div class="form-group">
-                        <label for="category">Categoria:</label>
-                        <select id="category" name="category" required>
-                            <option value="">Selecione...</option>
-                            <option value="electronics">Eletrônicos</option>
-                            <option value="clothing">Vestuário</option>
-                            <option value="home">Casa & Decoração</option>
-                        </select>
-                    </div>
+const marca = document.getElementById("marca");
+const modelo = document.getElementById("modelo");
+const ano = document.getElementById("ano");
+const resultado = document.getElementById("resultado");
 
-                    <div class="form-group">
-                        <label for="description">Descrição Detalhada:</label>
-                        <textarea id="description" name="description" rows="4"></textarea>
-                    </div>
+function erro(msg){
+  resultado.innerHTML = "Erro: " + msg;
+}
 
-                    <div class="form-group">
-                        <label for="image">Imagem do Produto:</label>
-                        <input type="file" id="image" name="image" accept="image/png, image/jpeg, image/webp" required>
-                    </div>
 
-                </fieldset>
+fetch("api.php?tipo=marcas")
+.then(res => res.json())
+.then(data => {
+  marca.innerHTML = '<option value="">Escolha a marca</option>';
+  data.forEach(m => {
+    marca.innerHTML += `<option value="${m.codigo}">${m.nome}</option>`;
+  });
+})
+.catch(() => erro("Não foi possível carregar marcas"));
 
-                <footer>
-                    <button type="submit" name="btn_cadastrar">
-                        Cadastrar Produto
-                    </button>
-                </footer>
 
-            </form>
 
-        </section>
-    </main>
+marca.addEventListener("change", () => {
+
+  if(!marca.value) return;
+
+  modelo.disabled = true;
+  ano.disabled = true;
+  modelo.innerHTML = "<option>Carregando modelos...</option>";
+  ano.innerHTML = "<option>Escolha o modelo</option>";
+  resultado.innerHTML = "";
+
+  fetch(`api.php?tipo=modelos&marca=${marca.value}`)
+  .then(res => res.json())
+  .then(data => {
+    modelo.innerHTML = '<option value="">Escolha o modelo</option>';
+    data.forEach(m => {
+      modelo.innerHTML += `<option value="${m.codigo}">${m.nome}</option>`;
+    });
+    modelo.disabled = false;
+  })
+  .catch(() => erro("Erro ao carregar modelos"));
+
+});
+
+
+
+modelo.addEventListener("change", () => {
+
+  if(!modelo.value) return;
+
+  ano.disabled = true;
+  ano.innerHTML = "<option>Carregando anos...</option>";
+  resultado.innerHTML = "";
+
+  fetch(`api.php?tipo=anos&marca=${marca.value}&modelo=${modelo.value}`)
+  .then(res => res.json())
+  .then(data => {
+    ano.innerHTML = '<option value="">Escolha o ano</option>';
+    data.forEach(a => {
+      ano.innerHTML += `<option value="${a.codigo}">${a.nome}</option>`;
+    });
+    ano.disabled = false;
+  })
+  .catch(() => erro("Erro ao carregar anos"));
+
+});
+
+
+
+function consultar(){
+
+  if(!ano.value){
+    erro("Escolha marca, modelo e ano");
+    return;
+  }
+
+  fetch(`api.php?tipo=preco&marca=${marca.value}&modelo=${modelo.value}&ano=${ano.value}`)
+  .then(res => res.json())
+  .then(data => {
+    resultado.innerHTML = `
+      <b>${data.Marca}</b><br>
+      ${data.Modelo}<br>
+      Ano: ${data.AnoModelo}<br>
+      Valor: <strong>${data.Valor}</strong>
+    `;
+  })
+  .catch(() => erro("Erro ao consultar preço"));
+
+}
+
+</script>
 
 </body>
 </html>
