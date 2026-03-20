@@ -1,130 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-<meta charset="UTF-8">
-<title>Consulta FIPE</title>
+    <meta charset="UTF-8">
+    <title>Loja de Produtos</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h2>Consulta Tabela FIPE</h2>
+    <div class="container">
 
-<label>Marca:</label><br>
-<select id="marca">
-  <option value="">Carregando marcas...</option>
-</select>
-<br><br>
+        <div class="sidebar">
+            <h2>Escolha um ID de 1 a 20</h2>
 
-<label>Modelo:</label><br>
-<select id="modelo" disabled>
-  <option>Escolha a marca primeiro</option>
-</select>
-<br><br>
+            <div class="input-group">
+                <input type="number" id="productId" placeholder="ID">
+                <button onclick="buscarPorId()">Buscar</button>
+            </div>
 
-<label>Ano:</label><br>
-<select id="ano" disabled>
-  <option>Escolha o modelo</option>
-</select>
-<br><br>
+            <div id="listaProdutos">
+                <p>Carregando...</p>
+            </div>
+        </div>
 
-<button onclick="consultar()">Consultar preço</button>
+        <div class="content">
+            <div class="product-card" id="product">
+                <p>Carregando produto...</p>
+            </div>
+        </div>
 
-<h3 id="resultado"></h3>
+    </div>
 
-<script>
-
-const marca = document.getElementById("marca");
-const modelo = document.getElementById("modelo");
-const ano = document.getElementById("ano");
-const resultado = document.getElementById("resultado");
-
-function erro(msg){
-  resultado.innerHTML = "Erro: " + msg;
-}
-
-
-fetch("api.php?tipo=marcas")
-.then(res => res.json())
-.then(data => {
-  marca.innerHTML = '<option value="">Escolha a marca</option>';
-  data.forEach(m => {
-    marca.innerHTML += `<option value="${m.codigo}">${m.nome}</option>`;
-  });
-})
-.catch(() => erro("Não foi possível carregar marcas"));
-
-
-
-marca.addEventListener("change", () => {
-
-  if(!marca.value) return;
-
-  modelo.disabled = true;
-  ano.disabled = true;
-  modelo.innerHTML = "<option>Carregando modelos...</option>";
-  ano.innerHTML = "<option>Escolha o modelo</option>";
-  resultado.innerHTML = "";
-
-  fetch(`api.php?tipo=modelos&marca=${marca.value}`)
-  .then(res => res.json())
-  .then(data => {
-    modelo.innerHTML = '<option value="">Escolha o modelo</option>';
-    data.forEach(m => {
-      modelo.innerHTML += `<option value="${m.codigo}">${m.nome}</option>`;
-    });
-    modelo.disabled = false;
-  })
-  .catch(() => erro("Erro ao carregar modelos"));
-
-});
-
-
-
-modelo.addEventListener("change", () => {
-
-  if(!modelo.value) return;
-
-  ano.disabled = true;
-  ano.innerHTML = "<option>Carregando anos...</option>";
-  resultado.innerHTML = "";
-
-  fetch(`api.php?tipo=anos&marca=${marca.value}&modelo=${modelo.value}`)
-  .then(res => res.json())
-  .then(data => {
-    ano.innerHTML = '<option value="">Escolha o ano</option>';
-    data.forEach(a => {
-      ano.innerHTML += `<option value="${a.codigo}">${a.nome}</option>`;
-    });
-    ano.disabled = false;
-  })
-  .catch(() => erro("Erro ao carregar anos"));
-
-});
-
-
-
-function consultar(){
-
-  if(!ano.value){
-    erro("Escolha marca, modelo e ano");
-    return;
-  }
-
-  fetch(`api.php?tipo=preco&marca=${marca.value}&modelo=${modelo.value}&ano=${ano.value}`)
-  .then(res => res.json())
-  .then(data => {
-    resultado.innerHTML = `
-      <b>${data.Marca}</b><br>
-      ${data.Modelo}<br>
-      Ano: ${data.AnoModelo}<br>
-      Valor: <strong>${data.Valor}</strong>
-    `;
-  })
-  .catch(() => erro("Erro ao consultar preço"));
-
-}
-
-</script>
+    <script src="script.js"></script>
 
 </body>
+
 </html>
